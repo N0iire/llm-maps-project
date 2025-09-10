@@ -43,7 +43,7 @@ The entire architecture is built with best practices in mind, focusing on automa
 
 **1. Clone the Repository**
 ```bash
-git clone [Link ke Repository GitHub Anda]
+git clone [https://github.com/N0iire/llm-maps-project]
 cd [nama-folder-proyek]```
 
 **2. Create the Environment File**
