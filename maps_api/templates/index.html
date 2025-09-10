@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pencari Lokasi AI</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f4f7f9; color: #333; max-width: 800px; margin: 20px auto; padding: 20px; }
+        h1 { color: #0056b3; }
+        .search-container { display: flex; gap: 10px; margin-bottom: 20px; }
+        #prompt-input { flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; }
+        #search-button { padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        #search-button:hover { background-color: #0056b3; }
+        #status { margin: 20px 0; font-style: italic; color: #555; }
+        .result-item { background-color: #fff; border: 1px solid #ddd; border-radius: 5px; padding: 15px; margin-bottom: 15px; }
+        .result-item h3 { margin-top: 0; color: #007bff; }
+        .result-item a { color: #007bff; text-decoration: none; font-weight: bold; }
+        .result-item iframe { width: 100%; height: 300px; border: none; border-radius: 5px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <h1>Pencari Lokasi AI</h1>
+    <p>Katakan apa yang ingin Anda cari, contoh: "warteg enak dekat sini" atau "kopi susu di senopati".</p>
+
+    <div class="search-container">
+        <input type="text" id="prompt-input" placeholder="Cari tempat makan, nongkrong, dll...">
+        <button id="search-button">Cari</button>
+    </div>
+
+    <div id="status"></div>
+    <div id="results-container"></div>
+
+    <script>
+    const promptInput = document.getElementById('prompt-input');
+    const searchButton = document.getElementById('search-button');
+    const statusDiv = document.getElementById('status');
+    const resultsContainer = document.getElementById('results-container');
+
+    let pollingInterval;
+
+    searchButton.addEventListener('click', findPlaces);
+
+    function findPlaces() {
+        const prompt = promptInput.value;
+        if (!prompt) {
+            alert('Silakan masukkan apa yang ingin Anda cari.');
+            return;
+        }
+        if (pollingInterval) clearInterval(pollingInterval);
+
+        statusDiv.textContent = 'Mendapatkan lokasi Anda...';
+        resultsContainer.innerHTML = '';
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                statusDiv.textContent = `Lokasi didapatkan. Mengirim permintaan pencarian...`;
+                startTask(prompt, lat, lon);
+            },
+            () => {
+                statusDiv.textContent = `Gagal mendapatkan lokasi. Tetap mengirim permintaan pencarian...`;
+                startTask(prompt, null, null);
+            }
+        );
+    }
+
+    async function startTask(prompt, latitude, longitude) {
+        try {
+            const response = await fetch('/api/find-place/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt, latitude, longitude })
+            });
+
+            if (response.status !== 202) {
+                throw new Error(`Gagal memulai task. Status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            const taskId = data.task_id;
+            statusDiv.textContent = `Permintaan diterima! Memproses... (ID: ${taskId.substring(0, 8)})`;
+            
+            pollingInterval = setInterval(() => {
+                checkTaskStatus(taskId);
+            }, 2000);
+
+        } catch (error) {
+            console.error('Error starting task:', error);
+            statusDiv.textContent = 'Gagal mengirim permintaan ke server.';
+        }
+    }
+
+    async function checkTaskStatus(taskId) {
+        try {
+            const response = await fetch(`/api/task-status/${taskId}/`);
+            const data = await response.json();
+
+            if (data.status === 'SUCCESS') {
+                clearInterval(pollingInterval);
+                const finalResult = data.result;
+
+                if (finalResult.error) {
+                    statusDiv.textContent = `Error: ${finalResult.error}`;
+                } else {
+                    statusDiv.textContent = `Menampilkan ${finalResult.data.length} hasil teratas:`;
+                    displayResults(finalResult.data);
+                }
+            } else if (data.status === 'FAILURE') {
+                clearInterval(pollingInterval);
+                statusDiv.textContent = 'Terjadi kesalahan saat memproses permintaan Anda.';
+            } else {
+                statusDiv.textContent = `Sedang memproses... Status: ${data.status}`;
+            }
+
+        } catch (error) {
+            console.error('Error checking status:', error);
+            clearInterval(pollingInterval); 
+            statusDiv.textContent = 'Gagal memeriksa status tugas.';
+        }
+    }
+
+    function displayResults(places) {
+        resultsContainer.innerHTML = '';
+        places.forEach(place => {
+            const item = document.createElement('div');
+            item.className = 'result-item';
+            item.innerHTML = `
+                <h3>${place.name}</h3>
+                <p><strong>Alamat:</strong> ${place.address}</p>
+                <p><strong>Rating:</strong> ${place.rating}</p>
+                <p><a href="${place.directions_url}" target="_blank">Lihat Rute dari Lokasi Anda</a></p>
+                <iframe loading="lazy" src="${place.embed_url}"></iframe>
+            `;
+            resultsContainer.appendChild(item);
+        });
+    }
+</script>
+
+</body>
+</html>

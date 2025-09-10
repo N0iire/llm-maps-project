@@ -1,0 +1,85 @@
+# docker-compose.prod.yml
+
+version: '3.8'
+
+services:
+  web:
+    build: .
+    container_name: llm_maps_web_prod
+    # GANTI 'command' dengan entrypoint script kita
+    command: /app/entrypoint.prod.sh
+    # HAPUS 'volumes', karena di produksi kode disalin saat build
+    # volumes:
+    #   - .:/app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+      # TAMBAHKAN INI UNTUK MEMATIKAN DEBUG
+      - DEBUG=False
+      # Atur host yang diizinkan. '*' adalah untuk kemudahan,
+      # tapi di deploy nyata ganti dengan domain Anda.
+      - ALLOWED_HOSTS=* 
+    depends_on:
+      - db
+      - redis
+      - ollama
+
+  db:
+    image: postgis/postgis:15-3.3
+    container_name: llm_maps_db_prod
+    volumes:
+      - postgres_data_prod:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=llm_maps_db
+    # HAPUS 'ports' di produksi, database tidak seharusnya terekspos ke luar
+    # ports:
+    #   - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    container_name: llm_maps_redis_prod
+    # HAPUS 'ports' di produksi
+    # ports:
+    #   - "6379:6379"
+
+  ollama:
+    build:
+      context: ./ollama
+    container_name: llm_maps_ollama_prod
+    volumes:
+      - ollama_data_prod:/root/.ollama
+    # HAPUS 'ports' di produksi, kecuali Anda ingin mengaksesnya dari luar
+    # ports:
+    #   - "11434:11434"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  worker:
+    build: .
+    container_name: llm_maps_worker_prod
+    command: celery -A core worker -l info
+    # HAPUS 'volumes'
+    # volumes:
+    #   - .:/app
+    env_file:
+      - .env
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    depends_on:
+      - redis
+      - ollama
+      - db
+
+volumes:
+  postgres_data_prod:
+  ollama_data_prod:

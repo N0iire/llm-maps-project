@@ -1,0 +1,80 @@
+# docker-compose.yml (Versi Final)
+
+version: '3.8'
+
+services:
+  # Layanan untuk Web Server Django
+  web:
+    build: .
+    container_name: llm_maps_web
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      # Beritahu library 'ollama' untuk terhubung ke service 'ollama' di port 11434
+      - OLLAMA_HOST=http://ollama:11434
+    depends_on:
+      - db
+      - redis
+      - ollama  # Tambahkan dependensi ke ollama
+
+  # Layanan untuk Database PostgreSQL dengan PostGIS
+  db:
+    image: postgis/postgis:15-3.3
+    container_name: llm_maps_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=llm_maps_db
+    ports:
+      - "5432:5432"
+
+  # Layanan untuk Redis
+  redis:
+    image: redis:7-alpine
+    container_name: llm_maps_redis
+    ports:
+      - "6379:6379"
+
+  # LAYANAN BARU UNTUK OLLAMA
+  ollama:
+    build:
+      context: ./ollama  # Perintahkan Docker untuk build dari folder 'ollama'
+    container_name: llm_maps_ollama
+    volumes:
+      # Simpan model yang di-download secara persisten di host
+      - ollama_data:/root/.ollama
+    ports:
+      - "11434:11434"
+    # Konfigurasi untuk meneruskan GPU ke dalam kontainer
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+  worker:
+      build: .
+      container_name: llm_maps_worker
+      command: celery -A core worker -l info
+      volumes:
+        - .:/app
+      env_file:
+        - .env
+      environment:
+        - OLLAMA_HOST=http://ollama:11434
+      depends_on:
+        - redis
+        - ollama
+        - db
+
+volumes:
+  postgres_data:
+  ollama_data:  # Definisikan volume untuk ollama
