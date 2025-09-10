@@ -79,46 +79,6 @@ Your browser will ask for permission to access your location. Allow it for the b
 
 ---
 
-### 3. Draf Email Final
-
-Ini adalah draf email yang sudah disesuaikan dengan semua data Anda. Siap untuk disalin, ditempel, dan dikirim.
-
-**Subject:** Technical Test Submission - Reichan Muhammad Maulana
-
-**To:** hr@heypico.ai
-
-**Body:**
-
-Dear HeyPico.ai HR Team,
-
-Thank you again for the opportunity to complete the technical test for the role. I enjoyed the challenge, as it was a great opportunity to work on a real-world task involving the **automation and integration logic** that is central to the work at HeyPico.ai.
-
-Please find my submission details below as requested:
-
-**1. Technical Test Submission**
-
-The complete project, including all source code and configuration files, is available in the following GitHub repository:
-
-*   **GitHub Link:** `[Link ke Repository GitHub Anda]`
-
-I have also included a detailed `README.md` file in the repository that explains the project architecture, setup instructions, and how to run the application using a single `docker-compose` command.
-
-As a brief overview, the project is a full-stack, containerized application that features:
-*   A robust **backend API** built with Python (Django) and prepared for production with Gunicorn.
-*   **Integration with a local AI model** (Ollama) for natural language understanding and a third-party API (Google Maps) for location data.
-*   An **asynchronous task processing system** using Celery and Redis to ensure the application remains responsive, even during complex operations.
-*   A complete **Dockerized environment** for all services (web server, database, LLM, cache, and worker), demonstrating a reproducible and modern deployment workflow.
-*   Implementation of **security best practices**, including API rate limiting, secure secrets management, and a production-ready server configuration.
-
-**2. Salary Information**
-
-*   **Last Drawn Salary (as of September):** IDR 6,500,000 per month.
-*   **Expected Salary:** IDR 10,000,000 - 12,000,000 per month. This is negotiable based on the overall compensation package and responsibilities.
-
-I am confident that the architecture and best practices implemented in this project are a strong reflection of the skills I can bring to your team. I look forward to the possibility of discussing my submission and the role with you further.
-
-Warm regards,
-
 Reichan Muhammad Maulana
 081222100219 (WhatsApp Only)
 [https://www.linkedin.com/in/reichanmuhammad/](https://www.linkedin.com/in/reichanmuhammad/)
