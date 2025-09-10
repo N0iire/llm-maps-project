@@ -78,7 +78,3 @@ Once the containers are running, simply open your web browser and navigate to:
 Your browser will ask for permission to access your location. Allow it for the best experience. Type what you are looking for into the search box and click "Cari". The results will appear on the page asynchronously.````
 
 ---
-
-Reichan Muhammad Maulana
-081222100219 (WhatsApp Only)
-[https://www.linkedin.com/in/reichanmuhammad/](https://www.linkedin.com/in/reichanmuhammad/)
